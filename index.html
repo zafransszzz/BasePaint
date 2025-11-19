@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BasePaint Mint</title>
+  <script src="https://unpkg.com/viem@2.7.0/dist/viem.min.js"></script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@farcaster/miniapp/dist/index.min.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+      background: radial-gradient(circle at top, #3b4bff, #000);
+      color: white;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+    .card {
+      background: rgba(255,255,255,0.15);
+      border-radius: 20px;
+      padding: 30px;
+      width: 90%;
+      max-width: 400px;
+      backdrop-filter: blur(10px);
+    }
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #4a79ff, #6d8cff);
+      color: white;
+      cursor: pointer;
+    }
+    #status {
+      margin-top: 20px;
+      font-size: 14px;
+      min-height: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <h1>Mint BasePaint</h1>
+    <p>Mint NFT dari BasePaint melalui Farcaster Mini App.</p>
+    <button id="mintBtn">Mint Sekarang</button>
+    <div id="status"></div>
+  </div>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@farcaster/miniapp/dist/index.min.js";
+
+    const client = createClient();
+    const CONTRACT = "0xBa5e05cb26b78eDa3A2f8e3b3814726305dcAc83";
+
+    // Encode manual (lebih aman)
+    const ABI = [{
+      name: "mint",
+      type: "function",
+      stateMutability: "payable",
+      inputs: []
+    }];
+
+    const data = viem.encodeFunctionData({
+      abi: ABI,
+      functionName: "mint",
+      args: []
+    });
+
+    const statusEl = document.getElementById("status");
+
+    document.getElementById("mintBtn").onclick = async () => {
+      try {
+        statusEl.innerText = "⏳ Request signature...";
+        const txHash = await client.actions.callContract({
+          chainId: "eip155:8453",
+          method: "eth_sendTransaction",
+          params: {
+            to: CONTRACT,
+            data: data,
+            value: "0x0"
+          }
+        });
+        statusEl.innerText = "✅ Sent! TX: " + txHash;
+      } catch (err) {
+        statusEl.innerText = "❌ Error: " + err.message;
+        console.log(err);
+      }
+    };
+  </script>
+</body>
+</html>
