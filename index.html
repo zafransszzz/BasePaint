@@ -3,86 +3,49 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Base Paint Mint</title>
-
-  <!-- Miniapps SDK -->
+  <title>BasePaint Mint</title>
   <script type="module" src="https://cdn.jsdelivr.net/npm/@farcaster/miniapp/dist/index.min.js"></script>
-
   <style>
     body {
       margin: 0;
       padding: 0;
-      font-family: 'Inter', sans-serif;
+      font-family: sans-serif;
       background: radial-gradient(circle at top, #3b4bff, #000);
       color: white;
       height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      overflow: hidden;
-    }
-
-    .card {
-      background: rgba(255, 255, 255, 0.07);
-      backdrop-filter: blur(10px);
-      border-radius: 22px;
-      padding: 40px;
-      width: 90%;
-      max-width: 420px;
       text-align: center;
-      box-shadow: 0 0 30px rgba(0, 0, 0, 0.35);
-      animation: fadeIn 0.6s ease;
     }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+    .card {
+      background: rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 30px;
+      width: 90%;
+      max-width: 400px;
     }
-
-    h1 {
-      font-size: 28px;
-      font-weight: 700;
-      margin-bottom: 10px;
-    }
-
-    p {
-      font-size: 15px;
-      opacity: 0.8;
-      margin-bottom: 30px;
-    }
-
-    .btn {
-      padding: 14px 26px;
-      font-size: 18px;
-      font-weight: bold;
-      background: linear-gradient(135deg, #4a79ff, #6d8cff);
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
       border: none;
-      border-radius: 14px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #4a79ff, #6d8cff);
       color: white;
       cursor: pointer;
-      width: 100%;
-      transition: 0.2s;
     }
-
-    .btn:hover {
-      transform: scale(1.03);
-      box-shadow: 0 0 15px rgba(100, 130, 255, 0.5);
-    }
-
     #status {
       margin-top: 20px;
       font-size: 14px;
-      opacity: 0.9;
       min-height: 20px;
     }
   </style>
 </head>
-
 <body>
   <div class="card">
-    <h1>Mint Base Paint</h1>
-    <p>Claim your Base Paint NFT directly inside Farcaster.</p>
-    <button class="btn" id="mintBtn">✨ Mint Now</button>
+    <h1>Mint BasePaint</h1>
+    <p>Gunakan Mini App untuk mint BasePaint di Base.</p>
+    <button id="mintBtn">Mint Sekarang</button>
     <div id="status"></div>
   </div>
 
@@ -90,8 +53,11 @@
     import { createClient } from "https://cdn.jsdelivr.net/npm/@farcaster/miniapp/dist/index.min.js";
 
     const client = createClient();
-    const CONTRACT = "0x1eeC6eC02056b16f5d8a1eba902206fa3bE4d774";
 
+    // Alamat kontrak BasePaint resmi (ERC-1155) menurut BaseScan
+    const CONTRACT = "0xBa5e05cb26b78eDa3A2f8e3b3814726305dcAc83";
+
+    // ABI mint yang dipakai (butuh dicek, ini contoh sederhana jika ada fungsi mint tanpa parameter)
     const ABI = [
       {
         "inputs": [],
@@ -102,30 +68,28 @@
       }
     ];
 
-    const status = document.getElementById("status");
+    const encoder = new client.encoder.Interface(ABI);
+    const data = encoder.encodeFunctionData("mint");
+
+    const statusEl = document.getElementById("status");
 
     document.getElementById("mintBtn").onclick = async () => {
       try {
-        status.innerText = "⏳ Requesting wallet...";
-
-        const provider = await client.ethereum.requestProvider();
-        const web3 = new provider.Web3(provider);
-        const contract = new web3.eth.Contract(ABI, CONTRACT);
-        const account = provider.selectedAddress;
-
-        status.innerText = "🚀 Sending transaction...";
-
-        await contract.methods.mint().send({
-          from: account,
-          value: 0
+        statusEl.innerText = "⏳ Meminta signature...";
+        const txHash = await client.actions.callContract({
+          chainId: "eip155:8453",  // Base mainnet
+          method: "eth_sendTransaction",
+          params: {
+            to: CONTRACT,
+            data: data,
+            value: "0x0"  // kalau mint-nya gratis, value 0
+          }
         });
-
-        status.innerText = "✅ Mint Success! Check your wallet.";
-      } catch (e) {
-        status.innerText = "❌ Error: " + e.message;
+        statusEl.innerText = "✅ Mint dikirim! TX: " + txHash;
+      } catch (err) {
+        statusEl.innerText = "❌ Error: " + err?.message;
       }
     };
   </script>
-
 </body>
 </html>
